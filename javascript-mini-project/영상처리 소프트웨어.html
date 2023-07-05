@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<HTML>
+    <HEAD>
+        <style>
+            @import url(testStyle.css);
+        </style>
+        <link href="<link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+        <script  lang="javascript">
+            //전역 변수부
+            var inCanvas, inCtx, outCanvas, outCtx;
+            var inFile;
+            var inImage, inH, inW, inPaper;
+            var outImage, outH, outW, outPaper;
+
+            //기본함수: 캔버스가 바로 실행되도록 하는 함수
+            function init() {
+                inCanvas = document.getElementById("inCanvas"); //도화지에 접근
+                inCtx = inCanvas.getContext('2d');
+                outCanvas = document.getElementById("outCanvas"); //도화지에 접근
+                outCtx = outCanvas.getContext('2d');
+            }
+            
+            //raw 파일을 불러오는 함수
+            function openRawImage() {
+                outW = outH = 0;
+                inFile = document.getElementById("inFile").files[0]; // Lena256.raw
+                inH = inW =  Math.floor(Math.sqrt(inFile.size));
+
+                inImage = new Array(inH);
+                for(var i=0; i<inH; i++)
+                    inImage[i] = new Array(inW);
+
+                inCanvas.height = inH;
+                inCanvas.width = inW;
+
+                var reader = new FileReader(); 
+                reader.readAsBinaryString(inFile);
+                reader.onload = function() {  
+                    var blob = reader.result; 
+                    
+                    for(var i=0; i<inH; i++) {
+                        for(var k=0; k<inW; k++) {
+                            var sPixel = (i*inH + k); // 시작 위치
+                            var ePixel = (i*inH + k) + 1; // 끝 위치
+                            inImage[i][k] = blob.slice(sPixel, ePixel).charCodeAt(0); // 한점만 썰어내기. '뺇'--> 253
+                        }
+                    }
+                    displayImage();                   
+                }
+
+            }
+
+
+            function displayImage() {
+            
+                inPaper = inCtx.createImageData(inH, inW);
+                    for (var i=0; i<inH; i++) {
+                        for (var k=0; k<inW; k++) {
+                            var pixel = inImage[i][k];
+                            inPaper.data[(i*inH+k)*4 + 0] = pixel; //R
+                            inPaper.data[(i*inH+k)*4 + 1] = pixel; //G
+                            inPaper.data[(i*inH+k)*4 + 2] = pixel; //B
+                            inPaper.data[(i*inH+k)*4 + 3] = 255; //Alpha
+
+                        }
+                    }
+                    inCtx.putImageData(inPaper,0,0);
+
+                    
+                outPaper = outCtx.createImageData(outH, outW);
+                    for (var i=0; i<outH; i++) {
+                        for (var k=0; k<outW; k++) {
+                            var pixel = outImage[i][k];
+                            outPaper.data[(i*outH+k)*4 + 0] = pixel; //R
+                            outPaper.data[(i*outH+k)*4 + 1] = pixel; //G
+                            outPaper.data[(i*outH+k)*4 + 2] = pixel; //B
+                            outPaper.data[(i*outH+k)*4 + 3] = 255; //Alpha
+
+                        }
+                    }
+                    outCtx.putImageData(outPaper,0,0);
+            }
+
+
+            function out(h, w) {
+                outH = parseInt(h);
+                outW = parseInt(w);
+                outImage = new Array(outH);
+                for(i=0; i<outH; i++) {
+                    outImage[i] = new Array(outW);
+                }
+                outCanvas.height = outH;
+                outCanvas.width = outW;
+            }
+
+            ///////////////////////////////
+            ///////영상처리 알고리즘////////
+            //////////////////////////////
+
+            ////////원본 이미지
+            function equalImage() {
+                out(inH, inW);
+
+                for(var i=0; i<outH; i++) {
+                    for (var k=0; k<outW; k++) {
+                        outImage[i][k] = inImage[i][k];
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////밝기 조절
+            function brightness() {
+                out(inH, inW);
+
+                for(var i=0; i<outH; i++)
+                    outImage[i] = new Array(outW);
+                var value = parseInt(prompt("값을 입력하세요", "50"));
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        if (inImage[i][k] + value < 0 )
+                            outImage[i][k] = 0;
+                        else if (inImage[i][k] + value > 255 )
+                            outImage[i][k] = 255;
+                        else 
+                            outImage[i][k] = inImage[i][k]+value;
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////고대비
+            function blackWhite() {
+                out(inH, inW);
+
+                for (i=0; i<outH; i++) {
+                    for (k=0; k<outW; k++) {
+
+                            if (inImage[i][k] > (0 + 255)/2) {
+                                outImage[i][k] =  255;
+                            } else {
+                                outImage[i][k] = 0;
+                            }
+                        }
+                    }
+                
+                displayImage();
+            }
+
+
+            //////// 고대비 히스토그램 (평균)
+            function blackWhite2() {
+                out(inH, inW);
+                var avgValue, hapValue =0 ;
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        hapValue += inImage[i][k];
+                avgValue = hapValue / (inH*inW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        if (inImage[i][k] <= avgValue)
+                            outImage[i][k] = 0;
+                        else
+                            outImage[i][k] = 255;
+                        }
+                    }
+                
+                displayImage();
+            }
+
+
+            //////// 고대비 히스토그램 (중앙값)
+            function blackWhite3() {
+                out(inH, inW);
+                var centerValue = 0;
+                var oneAry = new Array(inH*inW);
+                var index=0;
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        oneAry[index++] = inImage[i][k];
+                oneAry.sort();
+                centerValue = oneAry[parseInt((inH*inW)/2)];
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        if (inImage[i][k] <= centerValue)
+                            outImage[i][k] = 0;
+                        else
+                            outImage[i][k] = 255;
+                    }
+                }
+                
+                displayImage();
+            }
+
+
+            ////////색상 반전
+            function reverseImage() {
+                out(inH, inW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        outImage[i][k] = 255 - inImage[i][k];
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////곱하기 레이어
+            function multipyImage() {
+                out(inH, inW);
+                var value = prompt("값을 입력하세요(양수)", "2");
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        outImage[i][k] = inImage[i][k] * value;
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////상하반전
+            function upToDown() {
+                out(inH, inW);
+
+                for (i=0; i<outH; i++) {
+                    for (k=0; k<outW; k++) {
+                        outImage[i][k] = inImage[outH - i - 1][k];
+                        }
+                    }
+                displayImage();
+            }
+
+
+            ////////좌우반전
+            function rightToLeft() {
+                out(inH, inW);
+
+                for (i=0; i<outH; i++) {
+                    for (k=0; k<outW; k++) {
+                        outImage[i][k] = inImage[i][outW - k -1];
+                        }
+                    }
+                
+                displayImage();
+            }
+
+
+            ////////카툰 효과
+            function cartoonImage() {
+                out(inH, inW);
+
+                for (i=0; i<outH; i++) {
+                    for (k=0; k<outW; k++) {
+                        if (inImage[i][k]>200)
+                            outImage[i][k] = 225;
+                        else if (inImage[i][k]>175)
+                            outImage[i][k] = 200;
+                        else if (inImage[i][k]>150)
+                            outImage[i][k] = 175;
+                        else if (inImage[i][k]>125)
+                            outImage[i][k] = 150;
+                        else if (inImage[i][k]>100)
+                            outImage[i][k] = 125;
+                        else if (inImage[i][k]>75)
+                            outImage[i][k] = 100;
+                        else if (inImage[i][k]>50)
+                            outImage[i][k] = 75;
+                        else if (inImage[i][k]>25)
+                            outImage[i][k] = 50;
+                        else if (inImage[i][k] = 0)
+                            outImage[i][k] = 0
+                        else outImage[i][k] = 25;
+                        }
+                    }
+                
+                displayImage();
+            }
+
+
+            ////////2배 축소
+            function reduceImage() {
+                    out(parseInt(inH/2), parseInt(inW/2));
+
+
+                    for (i=0; i<outH; i++) {
+                        for (k=0; k<outW; k++) {
+                            outImage[i][k] = (inImage[i*2+1][k*2+1] +inImage[i*2+1][k*2]+inImage[i*2][k*2+1]+inImage[i*2][k*2])/4;
+                        }
+                    }
+                    
+                displayImage();
+            }
+
+         
+            ////////2배 확대
+            function expandImage() {
+
+                var h = parseInt(inH*2);
+                var w = parseInt(inW*2);
+
+                midImage = new Array(h);
+                for(i=0; i<w; i++) {
+                    midImage[i] = new Array(w);
+                }
+
+                for (i=0; i<h; i++) {
+                    for (k=0; k<w; k++) {
+                        midImage[i][k] = inImage[parseInt(i/2)][parseInt(k/2)];
+                    }
+                }
+                
+                mid2Image = new Array(h);
+                for(i=0; i<w; i++) {
+                    mid2Image[i] = new Array(w);
+                }
+
+                for (i=1; i<h-1; i++) {
+                    for (k=1; k<w-1; k++) {
+                      
+                        if ((i+k)%2 ==0)
+                            mid2Image[i][k] = (midImage[i -1][k] + midImage[i][k-1] + midImage[i][k +1] + midImage[i+1][k])/4;
+                        else {
+                            mid2Image[i][k] = midImage[i][k];
+                        }
+                    }
+                }
+
+                out(h, w);
+                for (i=1; i<h-1; i++) {
+                    for (k=1; k<w-1; k++) {
+                      
+                        if ((i+k)%2 !=0)
+                            outImage[i][k] = (mid2Image[i -1][k] + mid2Image[i][k-1] + mid2Image[i][k +1] + mid2Image[i+1][k])/4;
+                        else {
+                            outImage[i][k] = mid2Image[i][k];
+                        }
+
+                    }
+                }
+
+                
+                displayImage();
+
+            }
+            
+
+            ////////회전
+            function rotateImage(){
+                var value = parseInt(prompt("회전각","45"));
+                var radian = value*Math.PI/180.0;
+
+                if (value >=0 && value <90)
+                    var h = w = inH * Math.cos(radian) + inW * Math.sin(radian);
+                else if (value >=90 && value <180)
+                    var h = w = - inH * Math.cos(radian) + inW * Math.sin(radian);
+                else if (value >=180 && value <270)
+                    var h = w = - inH * Math.cos(radian) - inW * Math.sin(radian);
+                else if (value >= 270 && value <360)
+                    var h = w = inH * Math.cos(radian) - inW * Math.sin(radian);
+                else
+                    alert("0~360 사이의 값을 입력해주세요");
+
+                out(h, w);
+
+                for(var i=0; i<outH; i++) 
+                    for (var k=0; k<outH; k++) 
+                        outImage[i][k] = 225.0;
+
+                var xd, yd;
+                var rx= parseInt(inH/2);
+                var ry= parseInt(inW/2);
+                var cx = parseInt(outH / 2);
+                var cy = parseInt(outW / 2);
+
+                //백워딩
+                for(var i=0;i<outH;i++){
+                    for(var k=0;k<outW;k++){
+                        xd = parseInt(Math.cos(radian)*(i-cx) - Math.sin(radian)*(k-cy) + rx);
+                        yd = parseInt(Math.sin(radian)*(i-cx) + Math.cos(radian)*(k-cy) + ry);
+                        if((0<=xd && xd<inH) && (0<= yd && yd<inW))
+                        outImage[i][k] = inImage[xd][yd];
+                    }
+                }
+                displayImage();
+            }
+
+
+
+            ////////블러
+            function blurImage() {
+                               
+                var value = parseInt(prompt("블러효과(정수입력)","3"));
+                out(inH, inW);
+                
+                var tmpInImage = new Array(inH+2*value);
+                for(var i=0; i<inH+2*value; i++)
+                    tmpInImage[i] = new Array(inW+2*value).fill(127.0);
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+value][k+value] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+         
+                for (i=value; i<outH+value; i++) {
+                    for (k=value; k<outW+value; k++) {
+                        var sum =0;
+                        for (n=0; n<2*value+1; n++) {
+                            for (m=0; m<2*value+1; m++) {
+                                sum += tmpInImage[i+value-n][k+value-m];
+                            }
+                        }
+                        tmpOutImage[i-value][k-value] = (sum) / ((2*value+1)*(2*value+1));
+                    }
+                }
+
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+                displayImage();
+
+            }
+
+
+
+            ////////엠보싱
+            function embos() {
+                out(inH, inW);
+
+                var mask = [    [ -1.0 ,  0.0 ,  0.0 ], 
+                                [  0.0 ,  0.0 ,  0.0 ], 
+                                [  0.0 ,  0.0 ,  1.0 ]  ];
+
+                var tmpInImage = new Array(inH+2);
+                for(var i=0; i<inH+2; i++)
+                    tmpInImage[i] = new Array(inW+2);
+               
+                for(var i=0; i<inH+2; i++) 
+                    for (var k=0; k<inW+2; k++) 
+                        tmpInImage[i][k] = 127.0;
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+1][k+1] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<3; m++) 
+                            for (var n=0; n<3; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+                // 후처리 : 마스크의 합계가 0일 경우.... (예외 있음)
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        tmpOutImage[i][k] += 127.0;
+
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+
+                displayImage();
+            }
+
+
+            ////////엣지1
+            function edge() {
+                out(inH, inW);
+ 
+                var mask = [    [ -1.0 ,  -1.0 ,  0.0 ], 
+                                [  -1.0 ,  3.0 ,  0.0 ], 
+                                [  0.0 ,  0.0 ,  0.0 ] ];
+
+                var tmpInImage = new Array(inH+2);
+                for(var i=0; i<inH+2; i++)
+                    tmpInImage[i] = new Array(inW+2).fill(127.0);
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+1][k+1] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+ 
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<3; m++) 
+                            for (var n=0; n<3; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+                
+                displayImage();
+            }
+
+
+            ////////엣지2
+            function edge2() {
+                out(inH, inW);
+                var mask = [    [ 0.0 ,  0.0 ,  0.0 ], 
+                                [  -1.0 ,  1.0 ,  0.0 ], 
+                                [  0.0 ,  0.0 ,  0.0 ] ];
+
+                var tmpInImage = new Array(inH+2);
+                for(var i=0; i<inH+2; i++)
+                    tmpInImage[i] = new Array(inW+2).fill(127.0);
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+1][k+1] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<3; m++) 
+                            for (var n=0; n<3; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+                
+                displayImage();
+            }
+
+
+            ////////엣지 3 (유사연산자)
+            function edge3() {
+                out(inH, inW);
+ 
+                var tmpinImage = new Array(inH+2);
+                for(var i=0;i<inH+2;i++)
+                    tmpinImage[i] = new Array(inW+2);
+                
+                for(var i=0;i<inH+2;i++){
+                    for(var k=0;k<inW+2;k++){
+                        tmpinImage[i][k] =127.0;
+                    }
+                }
+                
+                for(var i =0; i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        tmpinImage[i+1][k+1] = inImage[i][k];
+                    }
+                }
+                
+                tmpoutImage = new Array(outH);
+                for(var i=0;i<outH;i++)
+                    tmpoutImage[i] = new Array(outW);
+
+                for(var i=0;i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        var max = 0.0;
+                        for(var m=0;m<3;m++){
+                            for(var n=0;n<3;n++){
+                                pixel = Math.abs(tmpinImage[i+1][k+1] - tmpinImage[i+m][k+n]);
+                                if(pixel >= max) max = pixel;
+                            }
+                        }
+                        tmpoutImage[i][k] = max;
+                    }
+                }
+                for(var i=0;i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        if(tmpoutImage[i][k]>255) tmpoutImage[i][k] = 255;
+                        if(tmpoutImage[i][k]<0) tmpoutImage[i][k]=0;
+                    }
+                }
+
+                for(var i=0;i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        outImage[i][k] = parseInt(tmpoutImage[i][k]);
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////엣지4 (차연산자)
+            function edge4() {
+                out(inH, inW);
+ 
+                var tmpinImage = new Array(inH+2);
+                for(var i=0;i<inH+2;i++)
+                    tmpinImage[i] = new Array(inW+2);
+                
+                for(var i=0;i<inH+2;i++){
+                    for(var k=0;k<inW+2;k++){
+                        tmpinImage[i][k] =127.0;
+                    }
+                }
+                
+                for(var i =0; i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        tmpinImage[i+1][k+1] = inImage[i][k];
+                    }
+                }
+                
+                tmpoutImage = new Array(outH);
+                for(var i=0;i<outH;i++)
+                    tmpoutImage[i] = new Array(outW);
+
+                    for(var i=0;i<inH;i++){
+                        for(var k=0;k<inW;k++){
+                            var max = 0.0;
+                            for(var m=0;m<3;m+=2){
+                                for(var n=0;n<3;n+=2){
+                                    pixel = Math.abs(tmpinImage[i+1][k+1] - tmpinImage[i+m][k+n]);
+                                    if(pixel >= max) max = pixel;
+                                }
+                            }
+                            tmpoutImage[i][k] = max;
+                        }
+                }
+                for(var i=0;i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        if(tmpoutImage[i][k]>255) tmpoutImage[i][k] = 255;
+                        if(tmpoutImage[i][k]<0) tmpoutImage[i][k]=0;
+                    }
+                }
+
+                for(var i=0;i<inH;i++){
+                    for(var k=0;k<inW;k++){
+                        outImage[i][k] = parseInt(tmpoutImage[i][k]);
+                    }
+                }
+                displayImage();
+            }
+
+
+
+            ////////가우시안 블러
+            function gaussianBlur() {
+                out(inH, inW);
+
+                var mask = [    [ 1/16. ,  1/8.,  1/16. ], 
+                                [  1/8. ,  1/4. , 1/8. ], 
+                                [  1/16. ,  1/8. ,  1/16. ]  ];
+
+                var tmpInImage = new Array(inH+2);
+                for(var i=0; i<inH+2; i++)
+                    tmpInImage[i] = new Array(inW+2);
+               //127로 임시 초기화
+                for(var i=0; i<inH+2; i++) 
+                    for (var k=0; k<inW+2; k++) 
+                        tmpInImage[i][k] = 127.0;
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+1][k+1] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<3; m++) 
+                            for (var n=0; n<3; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+
+                displayImage();
+            }
+
+
+
+            ////////모션 블러
+            function motionBlur() {
+                out(inH, inW);
+
+                var mask = [    [ 0. ,  0.,  0., 0., 0.],
+                                [ 0. ,  0.,  0., 0., 0.],
+                                [  1/5. ,  1/5. , 1/5., 1/5., 1/5.],
+                                [ 0. ,  0.,  0., 0., 0.], 
+                                [  0. ,  0. ,  0., 0., 0. ]  ];
+
+                var tmpInImage = new Array(inH+4);
+                for(var i=0; i<inH+4; i++)
+                    tmpInImage[i] = new Array(inW+4);
+               //임시로 127로 초기화
+                for(var i=0; i<inH+4; i++) 
+                    for (var k=0; k<inW+4; k++) 
+                        tmpInImage[i][k] = 127.0;
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+2][k+2] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<5; m++) 
+                            for (var n=0; n<5; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+                        outImage[i][k] = parseInt(tmpOutImage[i][k]);
+                displayImage();
+            }
+
+
+
+            ////////샤프닝
+            function sharpen() {
+                out(inH, inW);
+                /*var mask = [    [ -1. ,  -1.,  -1. ], 
+                                [  -1. ,  9. , -1. ], 
+                                [  -1. ,  -1. ,  -1. ]  ];*/
+                var mask = [    [ 0. ,  -1.,  0. ], 
+                                [  -1. ,  5. , -1. ], 
+                                [  0. ,  -1. ,  0. ]  ];
+
+                var tmpInImage = new Array(inH+2);
+                for(var i=0; i<inH+2; i++)
+                    tmpInImage[i] = new Array(inW+2);
+               //127.0으로 임시 초기화
+                for(var i=0; i<inH+2; i++) 
+                    for (var k=0; k<inW+2; k++) 
+                        tmpInImage[i][k] = 127.0;
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        tmpInImage[i+1][k+1] = inImage[i][k];
+
+                var tmpOutImage = new Array(outH);
+                for(var i=0; i<outH; i++)
+                    tmpOutImage[i] = new Array(outW);
+
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        var S = 0.0;
+                        for(var m=0; m<3; m++) 
+                            for (var n=0; n<3; n++) 
+                                S += tmpInImage[i+m][k+n] * mask[m][n];
+                        
+                        tmpOutImage[i][k] = S;
+                    }
+                }
+
+                // 임시 출력 배열 --> 출력 배열
+                for (var i=0; i<outH; i++)
+                    for (var k=0; k<outW; k++)
+
+                        if (tmpOutImage[i][k]> 255.0) tmpOutImage[i][k] = 255.0;
+                        else if (tmpOutImage[i][k]<0) tmpOutImage[i][k] = 0.0;
+                        else outImage[i][k] = parseInt(tmpOutImage[i][k]);
+                // *******************************
+                displayImage();
+            }
+
+
+            ////////히스토그램 스트레칭
+            function histoImage() {
+                out(inH, inW);
+
+                //공식: out = (in - low)/(high - low)*255.0
+                var low = inImage[0][0], high = inImage[0][0]; 
+                    //high low를 구할 때 초기값을 내부에 있는 값으로 해주는 게 안전하다
+
+                for(var i=0; i<outH; i++) {
+                    for (var k=0; k<outW; k++) {
+                        if (inImage[i][k] < low)
+                            low = inImage[i][k];
+                        if (inImage[i][k] > high)
+                            high = inImage[i][k];
+                    }
+                }
+
+                for(var i=0; i<outH; i++) {
+                    for (var k=0; k<outW; k++) {
+                        outImage[i][k] = parseInt((inImage[i][k]-low)/(high-low)*255.0);
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////엔드-인
+            function endIn() {
+                out(inH, inW);
+
+                 //공식: out = (in - low)/(high - low)*255.0
+                 var low = inImage[0][0], high = inImage[0][0]; 
+                    //high low를 구할 때 초기값을 내부에 있는 값으로 해주는 게 안전하다
+
+                for(var i=0; i<outH; i++) {
+                    for (var k=0; k<outW; k++) {
+                        if (inImage[i][k] < low)
+                            low = inImage[i][k];
+                        if (inImage[i][k] > high)
+                            high = inImage[i][k];
+                    }
+                }
+                high -=50;
+                low += 50;
+
+                for(var i=0; i<outH; i++) {
+                    for (var k=0; k<outW; k++) {
+                        outImage[i][k] = parseInt((inImage[i][k]-low)/(high-low)*255.0);
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////평활화
+            function histoEqual() {
+                out(inH, inW);
+
+                //1단계: 히스토그램 생성
+                var histo = new Array(256);
+                for (var i=0; i<256; i++) // 초기화
+                    histo[i] = 0;
+
+                for(var i=0; i<inH; i++) 
+                    for (var k=0; k<inW; k++) 
+                        histo[inImage[i][k]]++;
+                //2단계: 누적 히스토그램
+                var sumHisto = new Array(256);
+                for (var i=0; i<256; i++) // 초기화
+                    sumHisto[i] = 0;
+                var sumValue = 0;
+                for (var i=0; i<256; i++) {
+                    sumValue += histo[i];
+                    sumHisto[i] = sumValue;
+                }
+                
+                //3단계: 정규화된 누적 합계
+                var n = new Array(256);
+                for (var i=0; i<256; i++) // 초기화
+                    n[i] = 0.0;
+                for (var i=0; i<256; i++)
+                    n[i] = sumHisto[i] * (1.0/(inH*inW) * 255.0);
+                
+
+                //최종
+                for(var i=0; i<inH; i++) {
+                    for (var k=0; k<inW; k++) {
+                        outImage[i][k] =  parseInt(n[inImage[i][k]]);
+                    }
+                }
+                displayImage();
+            }
+
+
+            ////////이미지 효과 적용
+            function saveImage(h, w) {
+                if (h>inH) {
+                    alert("이미지의 크기는 늘리지 못합니다.\n다른 효과를 적용해주세요.");
+                } else if (h == 0){
+                    alert("효과를 적용해주세요.");
+                }else {
+                    inH = h;
+                    inW = w;
+
+                    for(var i=0; i<inH; i++) {
+                        for (var k=0; k<inW; k++) {
+                            inImage[i][k] = outImage[i][k];
+                        }
+                    }
+
+                    inCanvas.height = inH;
+                    inCanvas.width = inW;
+
+                    inPaper = inCtx.createImageData(inH, inW);
+                        for (var i=0; i<inH; i++) {
+                            for (var k=0; k<inW; k++) {
+                                var pixel = inImage[i][k];
+                                inPaper.data[(i*inH+k)*4 + 0] = pixel; //R
+                                inPaper.data[(i*inH+k)*4 + 1] = pixel; //G
+                                inPaper.data[(i*inH+k)*4 + 2] = pixel; //B
+                                inPaper.data[(i*inH+k)*4 + 3] = 255; //Alpha
+
+                            }
+                        }
+                        inCtx.putImageData(inPaper,0,0);
+
+                        alert("효과가 적용되었습니다.");
+                }
+
+                
+            }
+
+
+        </script>
+    </HEAD>
+    <BODY onload="init()">
+
+       <div class="container" style="text-align: center;">
+        <img src="image/background.PNG" width="1000em" style="text-align: center;">
+            <div class="centered"><h1>사진 편집 프로그램 </h1>
+            <br><h3>(RAW 전용)</h3><h6 style="color: rgb(190, 74, 113);">@김민영</h6><br>
+            
+                <input type="file" id="inFile" accept='image/raw' onchange="openRawImage()"/>   
+            </div>
+       </div>
+
+            <ul class="menu">
+                <li><a href="#" onclick="equalImage()" >원본이미지</a></li>
+              <li>
+                <a href="#">색상 변경</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="brightness()">밝기 조절하기</a></li>
+                  <li><a href="#" onclick="reverseImage()">색상 반전</a></li>
+                  <li><a href="#" onclick="multipyImage()">곱하기</a></li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">회전/미러링</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="rightToLeft()">좌우반전</a></li>
+                  <li><a href="#" onclick="upToDown()">상하반전</a></li>
+                  <li><a href="#" onclick="rotateImage()">회전 각도 조절</a></li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">크기 조절</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="reduceImage()">2배 축소</a></li>
+                  <li><a href="#" onclick="expandImage()">2배 확대</a></li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">예술적 효과</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="embos()">엠보싱</a></li>
+                  <li><a href="#" onclick="sharpen()">샤프닝</a></li>
+                  <li><a href="#" onclick="cartoonImage()">카툰 효과</a></li>
+                  <li><a href="#" onclick="edge()">엣지1</a></li>
+                  <li><a href="#" onclick="edge2()">엣지2</a></li>
+                  <li><a href="#" onclick="edge3()">엣지3</a></li>
+                  <li><a href="#" onclick="edge4()">엣지4</a></li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">블러링</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="blurImage()">블러 조절</a></li>
+                  <li><a href="#" onclick="gaussianBlur()">가우시안 블러</a></li>
+                  <li><a href="#" onclick="motionBlur()">모션 블러</a></li>
+                </ul>
+              </li>
+              <li>
+                <a href="#">명도대비 강화</a>
+                <ul class="submenu">
+                  <li><a href="#" onclick="blackWhite()">고대비1</a></li>
+                  <li><a href="#" onclick="blackWhite2()">고대비2</a></li>
+                  <li><a href="#" onclick="blackWhite3()">고대비3</a></li>
+                  <li><a href="#" onclick="histoImage()">명암 스트레칭</a></li>
+                  <li><a href="#" onclick="endIn()">엔드-인 탐색</a></li>
+                  <li><a href="#" onclick="histoEqual()">평활화</a></li>
+                </ul>
+              </li>
+            </ul>
+
+
+            원본이미지<br>
+            <canvas id="inCanvas" height=256 width=256 style="background-color: pink;"></canvas><br><br>
+            효과 적용<br>
+            <canvas id="outCanvas" height=256 width=256 style="background-color: rgb(247, 172, 178);"></canvas><br><br>
+
+<center>
+            <button onclick="saveImage(outH, outW)" 
+            type="button" 
+            style="display:block; 
+                    width:20em; 
+                    background-color:palevioletred; 
+                    text-align: center; 
+                    padding: 10px; 
+                    border: none;
+                    color: whitesmoke;
+                    font-weight: border;
+                    border-radius: 0.5em; 
+                    font-size:medium;">적 용</button>
+<br>
+</center>
+        <h4>※수정된 이미지가 캔버스보다 사이즈가 큰 경우, 적용이 안됩니다.</h4><br>
+
+    </BODY>
+</HTML>
