@@ -1,4 +1,4 @@
-<h1>:cherry_blossom:OpenCV 없이 JavaScript로 구현하는 영상처리 소프트웨어</h1>
+<h1>:cherry_blossom:Developing Image Processing Software in JavaScript without OpenCV</h1>
 
 <hr>
 <span>
@@ -8,61 +8,86 @@
 </span>
 
 :calendar: 2023.04.11 ~ 04.16<br>
-:raising_hand: 개인 미니 프로젝트<br>
+:raising_hand: Personal Mini Project<br>
 
 
 <hr>
 
-영상처리 프로그램은 대부분 오픈소스로 공개되어 있는 OpenCV를 사용한다. OpenCV는 Open Source Computer Vision의 약자로 다양한 영상/동영상 처리에 사용할 수 있는 오픈소스 라이브러리로, 인텔이 컴퓨터 비전과 인공지능을 발달시키고자 하는 바람으로 출시한 것이다. 하지만 이번 프로젝트에서는 OpenCV를 사용하지 않고, JavaScript, HTML5, CSS으로 영상처리 알고리즘을 이해하고 코드화하여 영상처리 소프트웨어를 만들어보려고 한다.
+Many image processing programs heavily rely on OpenCV, an extensively used open-source library. OpenCV(Open Source Computer Vision) is a robust library known for its diverse capabilities in image and video processing. Originally released by Intel to advance computer vision and artificial intelligence, it has become a popular choice. 
 
-자세한 프로젝트 설명은 <a href="https://hanav.tistory.com/147">▶여기◀</a>를 클릭!
+However, in this project, my goal is to create an image processing software without utilizing OpenCV. Instead, I will use JavaScript, HTML5, and CSS to comprehend and implement image processing algorithms. 
 
-
-<h2>Step 1: 간단한 난수 배열로 영상처리 알고리즘 이해하고 적용해보기</h2>
-영상처리에 어떤 알고리즘들이 사용되는지 이전에 배운 적이 없으므로, 바로 이미지 파일에 적용하기 전에 단순한 난수 배열에 적용해보면서 이해했다.
-
-<h2>Step2: RAW 이미지 파일에 영상처리 알고리즘 적용해보기</h2>
-이제 RAW 이미지 파일에 적용해보았는데, 이미지 파일은 난수 배열보다 복잡하기 때문에 고려해야할 점이 있다.
-
-1. 이미지 파일은 RGB값과 Alpha 값이 묶여서 하나의 픽셀로 나타난다. 난수 배열에서는 하나의 픽셀이 하나의 숫자였다면, 이미지 파일에서는 (r, g, b, alpha) 가 하나의 픽셀이 된다. 여기서 만약 칼라 사진을 적용시킨다면 RGB값이 모두 달라 삼차원 배열을 설정해야 하겠지만, 이번 프로젝트에서는 간단하게 GrayScale 이미지를 사용할 것이다. GrayScale 이미지는 R=G=B (Alpha 값도 255, 투명도가 없는 이미지 파일을 사용)이므로 이차원 배열만 있어도 구현할 수 있다.
-2. HTML5 캔버스는 선과 면은 표현 가능하지만 점은 표현하지 못한다. 그래서 픽셀값 하나하나를 불러와 모여 있는 이미지를 표현할 수 없는데, 이는 픽셀 값을 모아서 임의의 종이에 먼저 붙이고, 종이를 캔버스에 붙이는 방식으로 해결하기로 했다.
+Click <a href="https://hanav.tistory.com/147">▶HERE◀</a> for more information about my project (Korean)
 
 
-<h2>Step3: 영상처리 심화 알고리즘 학습하고 적용해보기</h2>
-<h3>1) 화소 점 처리</h3>
-화소 점 처리란, 주변 화소 값에 상관없이 단순히 그 값만 변하는 것을 말한다.
+<h2>Step 1: Understanding and Applying Image Processing Algorithms with a Simple Random Array</h2>
+Since I haven't learned about the algorithms used in image processing before, I decided to first apply them to a simple random array to gain understanding.
 
--더하기 = 밝게 하기<br>
--빼기 = 어둡게 하기<br>
--곱하기 = 밝게하는데 밝은 곳은 더 밝아지고, 어두운 곳은 덜 밝아지게 하기<br>
--나누기 = 어둡게 하는데 어두운 곳은 더 어두워지고, 밝은 곳은 덜 어둡게 하기<br>
+<h2>Step2: Applying Image Processing Algorithms to RAW Image Files</h2>
+Now that I have applied the algorithms to RAW image files, there are additional considerations to take into account since image files are more complex than random arrays.
 
-더하기와 빼기, 곱하기와 나누기는 결국 같으므로 같이 조절할 수 있게 설정하였다. 그리고 0부터 255까지의 값만 가능하므로, 0이나 255를 벗어나는 경우가 발생하면 각각 0과 255로 받도록 제한조건도 설정해주었다.
+1. Image files represent pixels as a combination of RGB values and an alpha value. While in a random array, each pixel was represented by a single number, in an image file, a pixel is represented as (r, g, b, alpha). If we were to apply a color photo, we would need to set up a three-dimensional array since RGB values would vary. However, in this project, we will keep it simple and use a grayscale image. In a grayscale image, R=G=B (with an alpha value of 255, representing a fully opaque image), so we can implement it with just a two-dimensional array.
+2. HTML5 canvas can represent lines and shapes, but it lacks a direct way to represent individual pixels. Therefore, to overcome this limitation, we decided to gather the pixel values and arrange them on a separate piece of paper, and then attach the paper to the canvas. This approach allows us to represent the image that consists of pixels by assembling them together.
+
+
+<h2>Step3: Learning and Applying Advanced Image Processing Algorithms</h2>
+<h3>1) Point Processing</h3>
+Point processing refers to modifying pixel values without considering the surrounding pixels.
+
+- Addition: Brightens the image.<br>
+- Subtraction: Darkens the image.<br>
+- Multiplication: Brightens the image, with brighter areas becoming even brighter and darker areas becoming less bright.<br>
+- Division: Darkens the image, with darker areas becoming even darker and brighter areas becoming less dark.<br>
+
+Since addition and subtraction, as well as multiplication and division, ultimately achieve similar effects, we have provided the option to adjust them together. Additionally, since pixel values can only range from 0 to 255, we have implemented restrictions to set values to 0 or 255 if they exceed these limits.
 ```javascript
 if (inImage[i][k] + value < 0 )
     outImage[i][k] = 0;
 else if (inImage[i][k] + value > 255 )
     outImage[i][k] = 255;
 else 
-    outImage[i][k] = inImage[i][k]+value;
-outImage[i][k] = inImage[i][k] * value;
+    outImage[i][k] = inImage[i][k]+value; //for addition, substraction
+    outImage[i][k] = inImage[i][k] * value; //for multiplication, division
 ```
-또한, 색상을 반전시키는 것도 최대 명도값인 255에서 이전 픽셀값을 빼주면 되기 때문에 매우 간단하게 표현 가능하다.
+
+Furthermore, inverting the colors is also straightforward since it involves subtracting the previous pixel value from the maximum brightness value of 255. 
 ```javascript
 outImage[i][k] = 255 - inImage[i][k];
 ```
 
-명도가 변할 때 자연스럽게 이어지지 않고 경계가 지면서 미국 카툰 느낌이 나도록 보정할 수도 있다. 
-0~255까지 범위를 정해 일정 범위는 같은 픽셀값으로 설정해주면 된다.
+Additionally, to create a cartoon-like effect with distinct boundaries when modifying the brightness, you can adjust the image to achieve a more stylized appearance.
+
+By setting a certain range of pixel values to the same value within the 0 to 255 range, you can control specific aspects of the image to maintain consistency.
+```javascript
+if (inImage[i][k]>200)
+    outImage[i][k] = 225;
+else if (inImage[i][k]>175)
+    outImage[i][k] = 200;
+else if (inImage[i][k]>150)
+    outImage[i][k] = 175;
+else if (inImage[i][k]>125)
+    outImage[i][k] = 150;
+else if (inImage[i][k]>100)
+    outImage[i][k] = 125;
+else if (inImage[i][k]>75)
+    outImage[i][k] = 100;
+else if (inImage[i][k]>50)
+    outImage[i][k] = 75;
+else if (inImage[i][k]>25)
+    outImage[i][k] = 50;
+else if (inImage[i][k] = 0)
+    outImage[i][k] = 0
+else outImage[i][k] = 25;
+```
 
 
-<h3>2) 히스토그램 처리</h3>
+<h3>2) Histogram Processing</h3>
 
-히스토그램 처리를 통해 히스토그램으로 명도의 분포를 파악할 수 있고, 이를 잘 사용하면 명도 대비에 변화를 줄  수 있다.
+Histogram processing allows us to analyze the distribution of brightness using histograms and make adjustments to enhance contrast.
 
-히스토그램을 이용할 수 있는 제일 간단한 예는 이미지를 오직 255 또는 0으로 나타내는 고대비 이미지를 만들 때이다. 그냥 편하게 255와 0의 중간값인 127.5를 기준으로 할 수도 있지만, 만약 사진 자체가 밝아서 모두 128보다 큰 명도값을 갖는다면 전체가 하얀색으로 될 것이다. 이 때, 히스토그램을 활용해서 전체 이미지의 명도 분포를 바탕으로 기준값을 설정해주면 더 안전하고 고르게 고대비 효과를 줄 수 있다.
+One simple example of using histograms is creating a high-contrast image where the image is represented only by 255 or 0 values. While it's convenient to use the midpoint between 255 and 0, which is 127.5, as a threshold value, if the image itself is already bright and has brightness values greater than 128 throughout, the entire image will become white. In such cases, utilizing histograms to determine the brightness distribution of the entire image can provide a more reliable and even high-contrast effect by setting a threshold value based on the histogram.
 
-127.5를 기준으로 고대비 처리
+Using 127.5 as the threshold value
 ```javascript
 if (inImage[i][k] > (0 + 255)/2) {
     outImage[i][k] =  255;
@@ -70,7 +95,7 @@ if (inImage[i][k] > (0 + 255)/2) {
     outImage[i][k] = 0;
 }
 ```                            
-히스토그램 평균을 기준으로 고대비 처리
+Using the histogram mean as the threshold value
 ```javascript
 avgValue = hapValue / (inH*inW);
 
@@ -83,7 +108,7 @@ for(var i=0; i<inH; i++) {
         }
     }
 ```       
-히스토그램 중간값을 기준으로 고대비 처리
+Using the histogram median as the threshold value
 ```javascript
 oneAry.sort();
 centerValue = oneAry[parseInt((inH*inW)/2)];
@@ -97,63 +122,118 @@ for(var i=0; i<inH; i++) {
     }
  ```
 
-이 외에도 심화 이론을 적용해서 히스토그램의 명암 분포를 늘림으로써 낮은 명암대비를 보이는 영상의 화질을 향상시킬 수도 있다. 
+In addition, by applying advanced theories, various edge effects can be achieved using operators such as the Sobel operator, the difference operator, and the similarity operator. These operators can be utilized to create different edge effects in image processing.
 
 
-<h3>3) 기하학적 변환</h3>
-기하학적 변환은 화소의 공간적 위치를 재배치하는 것이다. 즉, 명도값이 변하는 것이 아니라 위치만 변한다. 제일 단순한 것은 좌우반전과 상하반전이다. 생각하기도 쉽고 코드도 단순하다.<br>
+Histogram stretching, end-in search, and histogram equalization are techniques used to adjust the contrast by redistributing the pixel values across the entire histogram range. These methods can effectively enhance the visibility of dark images and improve their overall appearance.
+```javascript
+//end-in search
+outImage[i][k] = parseInt((inImage[i][k]-low)/(high-low)*255.0);
+```
+```javascript
+for (var i=0; i<256; i++)
+  n[i] = sumHisto[i] * (1.0/(inH*inW) * 255.0); //Cumulative Sum Normalization
+//histogram equalization
+outImage[i][k] =  parseInt(n[inImage[i][k]]);
+```
 
-상하반전
+
+<h3>3) Geometric Transformations</h3>
+Geometric transformations involve rearranging the spatial positions of pixels without altering their brightness values. In other words, only the positions of pixels are modified. The simplest geometric transformations include horizontal flipping and vertical flipping, which are easy to conceptualize and implement with simple code.<br>
+
+Vertical flipping
 ```javascript
  outImage[i][k] = inImage[outH - i - 1][k];
 ```
 
-좌우반전
+Horizontal flipping
 ```javascript
 outImage[i][k] = inImage[i][outW - k -1];
 ```
-이미지를 회전시키거나 확대/축소시키는 것도 픽셀의 위치와 값에 변화를 주면 된다.
+Rotating or scaling an image can also be achieved by modifying the positions and values of pixels.
 
-하지만 더 잘 축소하고 확대하려면 알고리즘이 더 복잡해진다. 나는 아래와 같이 적용해보았다.
+However, achieving better results with image scaling requires more complex algorithms. I have experimented with the following approaches:
 
 
-화질 개선을 고려하지 않은 축소
+Downscaling without considering image quality
 ```javascript
 outImage[parseInt(i*scale)][parseInt(k*scale)] = inImage[i][k];
 ```
 
-화질 개선을 고려한 축소
+Downscaling with consideration for image quality
 ```javascript
 outImage[i][k] = (inImage[i*2+1][k*2+1] +inImage[i*2+1][k*2]+inImage[i*2][k*2+1]+inImage[i*2][k*2])/4;
 ```
 
-2배 확대도 마찬가지이다. 화질을 고려하지 않고 그냥 인접한 4개의 픽셀을 같은 값으로 할 수 있는데, 이는 픽셀 형태가 2배로 늘어나기 때문에 경계면이 매끄럽지 못하다. 따라서 고안한 방법은 원시 화소의 값의 가중치를 제일 높게 잡은 상태에서 주변 화소들의 값을 고려하여 출력 픽셀값을 받는 것이었다. (자세한 내용은 위 링크)
+The same applies to doubling the image size. Without considering image quality, we can simply assign the same value to adjacent 4 pixels. However, this results in rough boundaries since the pixel pattern is doubled. 
+```javascript
+outImage[i][k] = inImage[parseInt(i/2)][parseInt(k/2)];
+```
+
+To address this, I devised a method where the weight of the original pixel value is given the highest priority, and the values of surrounding pixels are taken into account to determine the output pixel value. 
+```javascript
+if ((i+k)%2 ==0)
+    mid2Image[i][k] = (midImage[i -1][k] + midImage[i][k-1] + midImage[i][k +1] + midImage[i+1][k])/4;
+else {
+    mid2Image[i][k] = midImage[i][k];
+}
+```
+
+
+<h3>4) Pixel Neighborhood Processing</h3>
+Pixel neighborhood processing involves calculating the spatial area that includes the surrounding pixels, taking them into consideration. To perform this processing, a mask is used, where the values of neighboring pixels are multiplied by corresponding weights.
+
+```javascript
+//after resizing tmpInImage's size..
+for(var i=0; i<inH; i++) {
+    for (var k=0; k<inW; k++) {
+        var S = 0.0;
+        for(var m=0; m<5; m++) 
+            for (var n=0; n<5; n++) 
+                S += tmpInImage[i+m][k+n] * mask[m][n];
+        
+        tmpOutImage[i][k] = S;
+    }
+}
+```
+
+The basic principle of using a mask for pixel neighborhood processing remains the same, but the effect varies depending on the weights assigned to the neighboring pixels and the original pixel.
+
+Furthermore, I have implemented the code to adjust the size of the blur effect. To control the size of blur effect, the code takes the size of the mask as an input value. As the size of the mask increases, the blur effect becomes stronger. Although implementing a variable matrix seemed challenging, as it involved nested loops, I found it feasible to represent it as a nested loop structure with nested for loops to calculate a simple average since it is a basic averaging computation.
+
+```javascript
+//mask for basic blur mask (unresizable)
+var mask = [    [ 1/16. ,  1/8.,  1/16. ], 
+                [  1/8. ,  1/4. , 1/8. ], 
+                [  1/16. ,  1/8. ,  1/16. ]  ];
+
+//mask for resizable blur effect
+for (n=0; n<2*value+1; n++) {
+    for (m=0; m<2*value+1; m++) {
+        sum += tmpInImage[i+value-n][k+value-m];
+    }
+}
+tmpOutImage[i-value][k-value] = (sum) / ((2*value+1)*(2*value+1));
+```
 
 
 
-<h3>4) 화소 영역 처리</h3>
-화소 영역 처리는 주변 화소의 값도 같이 고려하는 공간 영역을 계산한다. 이 처리를 하기 위해서는 주변 픽셀에 가중치를 곱하여 계산하는데, 이 때 마스크를 사용한다. 
-
-화소 영역 처리는 마스크를 사용하는 기본적인 원리는 다 같고, 주변 화소와 원시 화소간의 가중치에 따라 효과가 다르게 나온다. 
-
-더 나아가, 가장 기본적인 블러 효과를 조절할 수 있도록 코드를 짜보았다. 마스크의 크기가 커질수록 블러 효과는 점점 더 강해지기 때문에, 마스크의 크기를 value라 두고 값을 입력받았다. 
-하지만 가변행렬을 코드로 짜기에는 어려워보였고, 단순 평균 계산이기 때문에 어렵지 않게 이중 for문 안에 또 이중 for문이 반복되는 형태로 나타낸다면 충분히 구현할 수 있을 것이라고 생각했다.
 
 
+<h2>Step4: Improving the User Interface (UI)</h2>
+Since the basic algorithms have been implemented, I have also made modifications to the UI as it is crucial for the overall user experience.
+
+1. Replacing the select option tag with a list and submenu: I have created a new structure using a list and submenu to enhance the user's interaction and selection process.
+
+2. Adding the ability to apply effects in a cumulative manner: Users can now apply multiple effects consecutively to see the combined result.
+
+3. Adding error messages: I have implemented error messages to provide feedback in case of the following scenarios:
+
+- Attempting to apply effects without selecting any effect.
+- Inputting a value outside the range of 0 to 360 for the desired rotation angle effect.
+- Applying an effect that results in an image larger than the original image.
 
 
 
-<h2>Step4: UI 개선하기</h2>
-기본적인 알고리즘은 다 구현이 되었으면 UI도 중요하기 때문에 많이 수정을 하였다.
-
-1. select option 태그 -> list와 submenu를 새로 만듦
-
-2. 효과 중복 적용 기능 추가
-
-3. 오류 메세지 추가
-
--효과를 적용하지 않았는데 적용 버튼을 눌렀을 때
-
--원하는 각도로 회전 효과에 0~360 사이의 값이 아닌 숫자를 입력했을 때
-
--첫 이미지보다 더 큰 이미지로 만드는 효과를 적용시킬 때
+<hr>
+<div align="center">Thank you for showing interest in my first project!💖</div>
