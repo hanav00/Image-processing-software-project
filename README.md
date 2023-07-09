@@ -6,6 +6,10 @@
   <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=HTML5&logoColor=black"/>
   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=CSS3&logoColor=black"/>
 </span>
+<br>
+<span>
+  <img src="https://img.shields.io/badge/visualstudiocode-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white"/>
+</span>
 
 :calendar: 2023.04.11 ~ 04.16<br>
 :raising_hand: Personal Mini Project<br>
